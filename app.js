@@ -426,8 +426,35 @@
         if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); window.toggleNav(); }
     });
 
+    var pendingFileContent = null; // 标记是否有待加载的文件内容
+
+    // Electron IPC
+    if (window.electronAPI) {
+        window.onFileLoaded = function(content, filePath) {
+            pendingFileContent = content;
+            markdownInput.value = content;
+            markdownInput.dispatchEvent(new Event('input'));
+            statusText.textContent = '已加载：' + filePath;
+        };
+        window.onNewFile = function() {
+            if (markdownInput.value.trim() === '') return;
+            if (confirm('确定要清空所有内容吗？')) {
+                markdownInput.value = '';
+                markdownInput.dispatchEvent(new Event('input'));
+                statusText.textContent = '已新建';
+            }
+        };
+        window.addEventListener('electron-save-file', function(e) { window.saveFile(e.detail); });
+    }
+
     // 初始化
     function init() {
+        // 如果有待加载的文件内容（通过命令行参数传入），不加载默认样例
+        if (pendingFileContent) {
+            pendingFileContent = null;
+            return;
+        }
+
         var sample =
             '# 欢迎使用 Markdown 编辑器\n\n' +
             '这是一个功能强大的 **Markdown 编辑器**，支持实时预览和导航树。\n\n' +
@@ -475,23 +502,5 @@
     }
 
     window.addEventListener('load', init);
-
-    // Electron IPC
-    if (window.electronAPI) {
-        window.onFileLoaded = function(content, filePath) {
-            markdownInput.value = content;
-            markdownInput.dispatchEvent(new Event('input'));
-            statusText.textContent = '已加载：' + filePath;
-        };
-        window.onNewFile = function() {
-            if (markdownInput.value.trim() === '') return;
-            if (confirm('确定要清空所有内容吗？')) {
-                markdownInput.value = '';
-                markdownInput.dispatchEvent(new Event('input'));
-                statusText.textContent = '已新建';
-            }
-        };
-        window.addEventListener('electron-save-file', function(e) { window.saveFile(e.detail); });
-    }
 
 })();

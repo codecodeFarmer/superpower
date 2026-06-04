@@ -1,7 +1,59 @@
 const { app, BrowserWindow, dialog, Menu } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 let mainWindow;
+let fileToLoad = null; // 启动时传入的文件路径
+
+// 请求单实例锁，防止重复打开
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+    app.quit();
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        // 当第二个实例启动时（例如双击另一个 .md 文件），将文件路径传给已有窗口
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+            // 从命令行参数中提取文件路径
+            const filePath = extractFilePath(commandLine);
+            if (filePath) {
+                loadFileToSend(filePath);
+            }
+        }
+    });
+}
+
+// 从命令行参数中提取文件路径
+function extractFilePath(commandLine) {
+    // commandLine[0] 是程序路径，后面的参数可能是文件路径
+    for (let i = 1; i < commandLine.length; i++) {
+        const arg = commandLine[i];
+        // 跳过 Electron 内部参数（以 -- 或 -d 开头）
+        if (arg.startsWith('--') || arg.startsWith('-d')) {
+            continue;
+        }
+        // 检查是否是 .md / .markdown / .txt 文件
+        if (arg && /\.(md|markdown|txt)$/i.test(arg) && fs.existsSync(arg)) {
+            return arg;
+        }
+    }
+    return null;
+}
+
+// 读取文件内容并发送到渲染进程
+function loadFileToSend(filePath) {
+    try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        mainWindow.webContents.send('file-content', content, filePath);
+        // 更新窗口标题
+        const fileName = path.basename(filePath);
+        mainWindow.setTitle(fileName + ' - Markdown 编辑器');
+    } catch (err) {
+        console.error('加载文件错误:', err);
+    }
+}
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -23,6 +75,14 @@ function createWindow() {
 
     // 创建菜单
     createMenu();
+
+    // 窗口准备好后，如果有待加载的文件，立即加载
+    mainWindow.webContents.on('did-finish-load', () => {
+        if (fileToLoad) {
+            loadFileToSend(fileToLoad);
+            fileToLoad = null;
+        }
+    });
 
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -168,7 +228,14 @@ function confirmClear() {
     }) === 1;
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    // 解析启动时的命令行参数，提取文件路径
+    const filePath = extractFilePath(process.argv);
+    if (filePath) {
+        fileToLoad = filePath;
+    }
+    createWindow();
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
