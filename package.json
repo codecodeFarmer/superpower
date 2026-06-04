@@ -1,7 +1,7 @@
 {
   "name": "markdown-editor",
   "version": "1.0.0",
-  "description": "Markdown 编辑器 - 支持实时预览和语法高亮",
+  "description": "Markdown 编辑器 - 支持实时预览、导航树和语法高亮",
   "main": "main.js",
   "author": "Markdown Editor",
   "license": "MIT",
@@ -26,9 +26,9 @@
       "main.js",
       "preload.js",
       "lib/**/*",
-      "icon.png"
+      "icon.png",
+      "icon.jpg"
     ],
-    "extraResources": [],
     "win": {
       "target": [
         {

@@ -8,79 +8,78 @@
 </head>
 <body>
     <div class="container">
+        <!-- 顶部工具栏 -->
         <header class="header">
             <h1>📝 Markdown 编辑器</h1>
             <div class="toolbar">
-                <button class="toolbar-btn" onclick="insertText('# ')" title="标题">
-                    <span>H1</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('## ')" title="二级标题">
-                    <span>H2</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('### ')" title="三级标题">
-                    <span>H3</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('**')" title="加粗">
-                    <span>B</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('_')" title="斜体">
-                    <span>I</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('`')" title="代码">
-                    <span>&lt;/&gt;</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('- ')" title="列表">
-                    <span>•</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('[]()')" title="链接">
-                    <span>🔗</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('![]()')" title="图片">
-                    <span>🖼️</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('---')" title="分隔线">
-                    <span>─</span>
-                </button>
-                <button class="toolbar-btn" onclick="insertText('> ')" title="引用">
-                    <span>❝</span>
-                </button>
-                <button class="toolbar-btn" onclick="clearEditor()" title="清空">
-                    <span>🗑️</span>
-                </button>
-                <button class="toolbar-btn" onclick="saveFile()" title="保存">
-                    <span>💾</span>
-                </button>
-                <button class="toolbar-btn" onclick="loadFile()" title="打开">
-                    <span>📂</span>
-                </button>
+                <button class="toolbar-btn" onclick="insertText('# ')" title="一级标题">H1</button>
+                <button class="toolbar-btn" onclick="insertText('## ')" title="二级标题">H2</button>
+                <button class="toolbar-btn" onclick="insertText('### ')" title="三级标题">H3</button>
+                <button class="toolbar-btn" onclick="insertText('**')" title="加粗"><b>B</b></button>
+                <button class="toolbar-btn" onclick="insertText('_')" title="斜体"><i>I</i></button>
+                <button class="toolbar-btn" onclick="insertText('`')" title="代码">&lt;/&gt;</button>
+                <button class="toolbar-btn" onclick="insertText('- ')" title="列表">•</button>
+                <button class="toolbar-btn" onclick="insertText('[]()')" title="链接">🔗</button>
+                <button class="toolbar-btn" onclick="insertText('![]()')" title="图片">🖼️</button>
+                <button class="toolbar-btn" onclick="insertText('---')" title="分隔线">─</button>
+                <button class="toolbar-btn" onclick="insertText('> ')" title="引用">❝</button>
+                <button class="toolbar-btn" onclick="clearEditor()" title="清空">🗑️</button>
+                <button class="toolbar-btn" onclick="saveFile()" title="保存 (Ctrl+S)">💾</button>
+                <button class="toolbar-btn" onclick="loadFile()" title="打开 (Ctrl+O)">📂</button>
             </div>
         </header>
         
+        <!-- 三栏主体 -->
         <div class="editor-container">
-            <div class="editor-pane">
-                <div class="pane-header">
-                    <h3>编辑</h3>
-                    <span class="word-count">0 字</span>
+            <!-- 导航树 -->
+            <div class="nav-pane" id="nav-pane">
+                <div class="nav-pane-header">
+                    <span>📑 导航</span>
+                    <button class="nav-toggle-btn" onclick="toggleNav()" title="收起/展开">
+                        <span id="nav-toggle-icon">◀</span>
+                    </button>
                 </div>
-                <textarea 
-                    id="markdown-input" 
-                    placeholder="开始编写 Markdown 内容...&#10;&#10;支持以下语法：&#10;- # 标题&#10;- **加粗** 和 _斜体_&#10;- `代码`&#10;- - 列表&#10;- [链接](url)&#10;- ![](图片 url)&#10;- > 引用"
-                    spellcheck="false"
-                ></textarea>
+                <div class="nav-tree" id="nav-tree">
+                    <div class="nav-empty">编辑文档后<br>标题将自动显示在此处</div>
+                </div>
+            </div>
+
+            <!-- 编辑区 -->
+            <div class="editor-pane" id="editor-pane">
+                <div class="pane-header">
+                    <div class="pane-header-left">
+                        <button class="nav-restore-btn" id="nav-restore-btn" onclick="toggleNav()" title="展开导航 (Ctrl+B)" style="display:none;">
+                            <span>▶</span>
+                        </button>
+                        <button class="pane-toggle-btn" onclick="toggleEditor()" title="收起/展开编辑区">
+                            <span id="editor-toggle-icon">◀</span>
+                        </button>
+                        <span>编辑</span>
+                    </div>
+                    <span class="word-count" id="word-count">0 字</span>
+                </div>
+                <textarea id="markdown-input" spellcheck="false" placeholder="开始编写 Markdown 内容..."></textarea>
             </div>
             
-            <div class="preview-pane">
+            <!-- 预览区 -->
+            <div class="preview-pane" id="preview-pane">
                 <div class="pane-header">
-                    <h3>预览</h3>
+                    <div class="pane-header-left">
+                        <button class="pane-toggle-btn" onclick="togglePreview()" title="收起/展开预览区">
+                            <span id="preview-toggle-icon">▶</span>
+                        </button>
+                        <span>预览</span>
+                    </div>
                 </div>
                 <div id="markdown-preview" class="preview-content"></div>
             </div>
         </div>
         
+        <!-- 底部状态栏 -->
         <footer class="footer">
             <div class="status-bar">
                 <span id="status-text">就绪</span>
-                <span id="cursor-position">行：1, 列：1</span>
+                <span id="cursor-position">行 1, 列 1</span>
             </div>
         </footer>
     </div>
